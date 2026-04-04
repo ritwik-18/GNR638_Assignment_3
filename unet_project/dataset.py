@@ -1,33 +1,29 @@
+import os
+import cv2
 import torch
 from torch.utils.data import Dataset
 import numpy as np
-import cv2
 
-class ToyDataset(Dataset):
-    def __init__(self, num_samples=100, img_size=256):
-        self.num_samples = num_samples
-        self.img_size = img_size
+class RealBiomedicalDataset(Dataset):
+    def __init__(self, imgs_dir, masks_dir):
+        self.imgs_dir = imgs_dir
+        self.masks_dir = masks_dir
+        self.ids = [str(i) for i in range(30)] 
 
     def __len__(self):
-        return self.num_samples
+        return len(self.ids)
 
-    def __getitem__(self, idx):
-        # Create a black image
-        image = np.zeros((self.img_size, self.img_size), dtype=np.float32)
+    def __getitem__(self, i):
+        idx = self.ids[i]
+
+        img_file = os.path.join(self.imgs_dir, f'{idx}.png')
+        mask_file = os.path.join(self.masks_dir, f'{idx}_mask.png')
         
-        # Randomize circle properties
-        center_x = np.random.randint(40, self.img_size - 40)
-        center_y = np.random.randint(40, self.img_size - 40)
-        radius = np.random.randint(10, 40)
+        img = cv2.imread(img_file)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        mask = cv2.imread(mask_file, cv2.IMREAD_GRAYSCALE)
         
-        # Draw a white circle
-        cv2.circle(image, (center_x, center_y), radius, 1.0, -1)
+        img = np.transpose(img / 255.0, (2, 0, 1)).astype(np.float32)
+        mask = np.expand_dims(mask / 255.0, axis=0).astype(np.float32)
         
-        # For this toy task, the mask is exactly the same as the image
-        mask = image.copy()
-        
-        # Add a channel dimension for PyTorch (C, H, W)
-        image = np.expand_dims(image, axis=0)
-        mask = np.expand_dims(mask, axis=0)
-        
-        return torch.tensor(image), torch.tensor(mask)
+        return torch.tensor(img), torch.tensor(mask)

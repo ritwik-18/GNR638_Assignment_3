@@ -24,14 +24,14 @@ class UNet(nn.Module):
         self.n_channels = n_channels
         self.n_classes = n_classes
 
-        # Contracting Path (Encoder)
+        #Encoder
         self.inc = DoubleConv(n_channels, 64)
         self.down1 = nn.Sequential(nn.MaxPool2d(2), DoubleConv(64, 128))
         self.down2 = nn.Sequential(nn.MaxPool2d(2), DoubleConv(128, 256))
         self.down3 = nn.Sequential(nn.MaxPool2d(2), DoubleConv(256, 512))
         self.down4 = nn.Sequential(nn.MaxPool2d(2), DoubleConv(512, 1024))
 
-        # Expanding Path (Decoder)
+        #Decoder
         self.up1_trans = nn.ConvTranspose2d(1024, 512, kernel_size=2, stride=2)
         self.up1_conv = DoubleConv(1024, 512)
 
@@ -56,7 +56,6 @@ class UNet(nn.Module):
 
         # Decoder with Skip Connections
         x = self.up1_trans(x5)
-        # Padding in case of odd dimensions to ensure exact match for concatenation
         diffY = x4.size()[2] - x.size()[2]
         diffX = x4.size()[3] - x.size()[3]
         x = F.pad(x, [diffX // 2, diffX - diffX // 2, diffY // 2, diffY - diffY // 2])
